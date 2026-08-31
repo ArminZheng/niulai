@@ -5,21 +5,37 @@
   "packageManager": "pnpm@10.33.4",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:sql": "prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
     "next": "16.3.3",
+    "pg": "8.23.0",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
   "devDependencies": {
+    "@prisma/config": "7.10.0",
     "@tailwindcss/postcss": "4.1.11",
     "@types/node": "22.10.2",
+    "@types/pg": "8.23.1",
     "@types/react": "19.1.0",
     "@types/react-dom": "19.1.0",
+    "prisma": "7.10.0",
     "tailwindcss": "4.1.11",
     "typescript": "5.7.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "prisma",
+      "@tailwindcss/oxide",
+      "esbuild",
+      "sharp"
+    ]
   }
 }

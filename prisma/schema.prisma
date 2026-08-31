@@ -1,0 +1,104 @@
+// Prisma schema — niulai (blog + forum)
+// Boring schema, explicit relations, indexes only for real query patterns.
+// See docs/database.md and CLAUDE.md §6–§10.
+//
+// Prisma 7: connection URLs live in prisma.config.ts (CLI/migrate) and
+// lib/prisma.ts (runtime, via @prisma/adapter-pg), not in this datasource.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String?  @unique
+  name      String
+  role      Role     @default(READER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts    Post[]
+  comments Comment[]
+  topics   Topic[]
+  replies  Reply[]
+}
+
+// Minimum useful roles per CLAUDE.md §11. Auth flow deferred; owner seeded as ADMIN.
+enum Role {
+  READER
+  AUTHOR
+  ADMIN
+}
+
+model Post {
+  id          String      @id @default(cuid())
+  title       String
+  slug        String      @unique
+  content     String
+  excerpt     String?
+  status      PostStatus  @default(DRAFT)
+  authorId    String
+  author      User        @relation(fields: [authorId], references: [id])
+  publishedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  comments Comment[]
+
+  // List published posts, newest first.
+  @@index([status, publishedAt(sort: Desc)])
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Comments under a post, chronological.
+  @@index([postId, createdAt])
+}
+
+model Topic {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  content   String
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  replies Reply[]
+
+  // Forum list, newest first.
+  @@index([createdAt])
+}
+
+model Reply {
+  id        String   @id @default(cuid())
+  content   String
+  topicId   String
+  topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Replies under a topic, chronological.
+  @@index([topicId, createdAt])
+}

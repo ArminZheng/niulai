@@ -1,15 +1,57 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+
+export const metadata = { title: "forum — niulai" };
+
 export default async function TopicPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const topic = await prisma.topic.findUnique({
+    where: { id },
+    include: {
+      author: true,
+      replies: { include: { author: true }, orderBy: { createdAt: "asc" } },
+    },
+  });
+
+  if (!topic) {
+    notFound();
+  }
+
   return (
     <article>
-      <h1>topic: {id}</h1>
-      <p>话题详情与回复。待接入数据层后填充。</p>
+      <h1>{topic.title}</h1>
       <p>
-        <a href="/forum">← back to forum</a>
+        <small>
+          by {topic.author.name} · {topic.createdAt.toLocaleDateString("zh-CN")}
+        </small>
+      </p>
+      <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
+        {topic.content}
+      </pre>
+      <section>
+        <h2>回复 ({topic.replies.length})</h2>
+        {topic.replies.length === 0 ? (
+          <p>暂无回复。</p>
+        ) : (
+          <ul>
+            {topic.replies.map((r) => (
+              <li key={r.id}>
+                <strong>{r.author.name}</strong>: {r.content}
+              </li>
+            ))}
+          </ul>
+        )}
+        <p>
+          <small>回复需登录(待接入认证)。</small>
+        </p>
+      </section>
+      <p>
+        <Link href="/forum">← back to forum</Link>
       </p>
     </article>
   );
