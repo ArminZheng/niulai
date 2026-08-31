@@ -11,9 +11,9 @@ export default defineConfig({
   migrations: {
     path: "prisma/migrations",
   },
-  // Non-pooling connection for migrate/introspect. Undefined is fine for
-  // offline commands (generate, migrate diff --from-empty).
+  // Non-pooling connection for migrate/introspect (Supabase: POSTGRES_URL_NON_POOLING).
+  // Undefined is fine for offline commands (generate, migrate diff --from-empty).
   datasource: {
-    url: process.env.DIRECT_URL,
+    url: process.env.POSTGRES_URL_NON_POOLING ?? process.env.DIRECT_URL,
   },
 });
