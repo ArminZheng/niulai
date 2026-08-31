@@ -4,7 +4,17 @@ import { PrismaPg } from "@prisma/adapter-pg";
 // One connection string for runtime queries (Supabase pooler, transaction mode,
 // pgbouncer). Migrations use DIRECT_URL via prisma.config.ts instead.
 function createPrisma() {
-  const adapter = new PrismaPg(process.env.DATABASE_URL ?? "");
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    // Fail loudly with a actionable message instead of letting `pg` silently
+    // fall back to 127.0.0.1:5432 (which shows up as a confusing P1001).
+    throw new Error(
+      "DATABASE_URL is not set. Add it in Vercel → Settings → Environment Variables " +
+        "(exact name DATABASE_URL, value = Supabase pooler URL on port 6543 with " +
+        "pgbouncer=true), then redeploy."
+    );
+  }
+  const adapter = new PrismaPg(url);
   return new PrismaClient({ adapter });
 }
 
