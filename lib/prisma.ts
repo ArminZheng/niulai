@@ -32,15 +32,15 @@ function createPrisma(): PrismaClient {
     );
   }
 
-  // Local dev often sits behind a TLS-intercepting proxy (self-signed chain).
-  // Strip sslmode and skip cert verification in dev only. Production (Vercel)
-  // keeps strict sslmode=require, which Supabase trusts cleanly there.
-  const isDev = process.env.NODE_ENV !== "production";
-  const adapter = new PrismaPg(
-    isDev
-      ? { connectionString: withoutSslMode(url), ssl: { rejectUnauthorized: false } }
-      : url
-  );
+  // Supabase's pooler TLS chain includes a cert Node's CA bundle won't verify
+  // (self-signed in chain). pg v8 maps `sslmode=require` to verify-full, which
+  // then fails (P1011). Strip sslmode and encrypt without cert verification —
+  // this matches libpq's traditional `sslmode=require` semantics (encrypt,
+  // don't verify), which is what Supabase expects. Same in dev and prod.
+  const adapter = new PrismaPg({
+    connectionString: withoutSslMode(url),
+    ssl: { rejectUnauthorized: false },
+  });
   return new PrismaClient({ adapter });
 }
 
