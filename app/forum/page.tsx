@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
+// Content lives in the DB and changes on write — render per request, never at build.
+export const dynamic = "force-dynamic";
+
 export const metadata = { title: "forum — niulai" };
 
 export default async function ForumListPage() {
