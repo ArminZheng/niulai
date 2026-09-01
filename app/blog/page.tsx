@@ -3,40 +3,27 @@ import { redirect } from "next/navigation";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { withReadRetry } from "@/lib/retry";
+import {
+  PAGE_SIZE,
+  first,
+  pageQuery,
+  parsePage,
+  skipFor,
+  totalPagesFor,
+} from "@/lib/pagination";
+import { STATUS_LABEL } from "@/lib/validation";
+import { PaginationNav } from "@/components/PaginationNav";
 
 // Content lives in the DB and changes on write — render per request, never at build.
 export const dynamic = "force-dynamic";
 
 export const metadata = { title: "blog — niulai" };
 
-const PAGE_SIZE = 20;
-
 // Status is a query dimension, not a hard-coded gate. Default PUBLISHED is the
 // public reading view; the other values let the owner manage drafts/archives
 // until real auth lands (CLAUDE.md §11).
 const STATUS_FILTERS = ["PUBLISHED", "DRAFT", "ARCHIVED", "ALL"] as const;
 type StatusFilter = (typeof STATUS_FILTERS)[number];
-
-const STATUS_LABELS: Record<StatusFilter, string> = {
-  PUBLISHED: "已发布",
-  DRAFT: "草稿",
-  ARCHIVED: "已归档",
-  ALL: "全部",
-};
-
-// searchParams values may repeat (?q=a&q=b); the first one wins.
-function first(value: string | string[] | undefined): string {
-  return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
-}
-
-// Canonical links: omit params at their defaults so URLs stay short.
-function pageQuery(q: string, status: StatusFilter, page: number): string {
-  const params = new URLSearchParams();
-  if (q) params.set("q", q);
-  if (status !== "PUBLISHED") params.set("status", status);
-  if (page > 1) params.set("page", String(page));
-  return params.toString();
-}
 
 export default async function BlogListPage({
   searchParams,
@@ -49,7 +36,11 @@ export default async function BlogListPage({
   const status: StatusFilter = (STATUS_FILTERS as readonly string[]).includes(statusParam)
     ? (statusParam as StatusFilter)
     : "PUBLISHED";
-  const page = Math.max(1, parseInt(first(sp.page), 10) || 1);
+  const page = parsePage(first(sp.page));
+
+  // Canonical links keep the active filters; pageQuery drops defaults.
+  const hrefFor = (p: number) =>
+    `/blog${pageQuery(p, { q, status: status === "PUBLISHED" ? "" : status })}`;
 
   const where: Prisma.PostWhereInput = {
     ...(status !== "ALL" ? { status } : {}),
@@ -59,9 +50,9 @@ export default async function BlogListPage({
   // Count first so an out-of-range page can be clamped instead of rendering
   // an empty table with no explanation.
   const total = await withReadRetry(() => prisma.post.count({ where }));
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = totalPagesFor(total);
   if (page > totalPages) {
-    redirect(`/blog?${pageQuery(q, status, totalPages)}`);
+    redirect(hrefFor(totalPages));
   }
 
   const posts = await withReadRetry(() =>
@@ -73,7 +64,7 @@ export default async function BlogListPage({
         { publishedAt: { sort: "desc", nulls: "last" } },
         { createdAt: "desc" },
       ],
-      skip: (page - 1) * PAGE_SIZE,
+      skip: skipFor(page),
       take: PAGE_SIZE,
       include: { _count: { select: { comments: true } } },
     }),
@@ -91,7 +82,8 @@ export default async function BlogListPage({
         <select name="status" defaultValue={status} aria-label="状态">
           {STATUS_FILTERS.map((s) => (
             <option key={s} value={s}>
-              {STATUS_LABELS[s]}
+              {/* ALL is a filter-only pseudo status, not a real post status. */}
+              {s === "ALL" ? "全部" : STATUS_LABEL[s]}
             </option>
           ))}
         </select>
@@ -127,7 +119,7 @@ export default async function BlogListPage({
                     {post.title}
                   </Link>
                 </td>
-                <td>{STATUS_LABELS[post.status]}</td>
+                <td>{STATUS_LABEL[post.status]}</td>
                 <td>{post.publishedAt?.toLocaleDateString("zh-CN") ?? "—"}</td>
                 <td>{post._count.comments}</td>
                 <td>
@@ -138,20 +130,7 @@ export default async function BlogListPage({
           </tbody>
         </table>
       )}
-      <nav aria-label="分页">
-        {page > 1 ? (
-          <>
-            <Link href={`/blog?${pageQuery(q, status, page - 1)}`}>← 上一页</Link>{" "}
-          </>
-        ) : null}
-        第 {page} / {totalPages} 页 · 共 {total} 条
-        {page < totalPages ? (
-          <>
-            {" "}
-            <Link href={`/blog?${pageQuery(q, status, page + 1)}`}>下一页 →</Link>
-          </>
-        ) : null}
-      </nav>
+      <PaginationNav page={page} totalPages={totalPages} total={total} hrefFor={hrefFor} />
     </article>
   );
 }

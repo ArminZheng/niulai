@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { withReadRetry } from "@/lib/retry";
 import { PostForm } from "@/components/blog/PostForm";
-import { DeletePostButton } from "@/components/blog/DeletePostButton";
+import { deletePost } from "@/app/blog/actions";
+import { DeleteButton } from "@/components/DeleteButton";
 
 export const metadata = { title: "edit post — niulai" };
 
@@ -24,7 +25,12 @@ export default async function EditPostPage({
       <h1>edit post</h1>
       <PostForm post={post} />
       <hr />
-      <DeletePostButton id={post.id} title={post.title} />
+      <DeleteButton
+        action={deletePost}
+        fields={{ id: post.id }}
+        confirmText={`删除「${post.title}」?评论将一并删除,不可恢复。`}
+        label="删除文章"
+      />
       <p>
         {/* Drafts/archived have no public post page — always return to the list. */}
         <Link href="/blog">← back to blog</Link>
