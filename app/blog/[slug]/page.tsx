@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { withReadRetry } from "@/lib/retry";
+import { renderMarkdown } from "@/lib/markdown";
 import { CommentForm } from "@/components/blog/CommentForm";
 
 export const metadata = { title: "blog — niulai" };
@@ -35,9 +36,8 @@ export default async function PostPage({
           {post.publishedAt?.toLocaleDateString("zh-CN")}
         </small>
       </p>
-      <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
-        {post.content}
-      </pre>
+      {/* Owner-authored Markdown → trusted HTML; see lib/markdown.ts. */}
+      <div dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content) }} />
       <section>
         <h2>评论 ({post.comments.length})</h2>
         {post.comments.length === 0 ? (
