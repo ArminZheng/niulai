@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { withReadRetry } from "@/lib/retry";
 import { renderMarkdown } from "@/lib/markdown";
 import { CommentForm } from "@/components/blog/CommentForm";
+import { DeleteCommentButton } from "@/components/blog/DeleteCommentButton";
 
 export const metadata = { title: "blog — niulai" };
 
@@ -46,7 +47,8 @@ export default async function PostPage({
           <ul>
             {post.comments.map((c) => (
               <li key={c.id}>
-                <strong>{c.author.name}</strong>: {c.content}
+                <strong>{c.author.name}</strong>: {c.content}{" "}
+                <DeleteCommentButton id={c.id} />
               </li>
             ))}
           </ul>

@@ -68,3 +68,46 @@ export async function createReply(_prev: FormState, formData: FormData): Promise
   revalidatePath(`/forum/${topicId}`);
   redirect(`/forum/${topicId}`);
 }
+
+// Hard delete. Replies go with it via the schema's onDelete: Cascade; the
+// client form shows a native confirm before this runs.
+export async function deleteTopic(_prev: FormState, formData: FormData): Promise<FormState> {
+  if (!(await canWrite())) return { message: "需要登录才能删除。" };
+
+  const id = String(formData.get("id") ?? "");
+  const topic = await prisma.topic.findUnique({ where: { id }, select: { id: true } });
+  if (!topic) return { message: "话题不存在或已被删除。" };
+
+  try {
+    await prisma.topic.delete({ where: { id: topic.id } });
+  } catch (err) {
+    console.error("deleteTopic failed:", err);
+    return { message: "删除失败,请稍后重试。" };
+  }
+
+  revalidatePath("/forum");
+  redirect("/forum");
+}
+
+// The replyId comes from a hidden field, so the row is re-fetched before
+// deleting — never trust client-supplied ids.
+export async function deleteReply(_prev: FormState, formData: FormData): Promise<FormState> {
+  if (!(await canWrite())) return { message: "需要登录才能删除。" };
+
+  const replyId = String(formData.get("replyId") ?? "");
+  const reply = await prisma.reply.findUnique({
+    where: { id: replyId },
+    select: { id: true, topicId: true },
+  });
+  if (!reply) return { message: "回复不存在或已被删除。" };
+
+  try {
+    await prisma.reply.delete({ where: { id: reply.id } });
+  } catch (err) {
+    console.error("deleteReply failed:", err);
+    return { message: "删除失败,请稍后重试。" };
+  }
+
+  revalidatePath(`/forum/${reply.topicId}`);
+  redirect(`/forum/${reply.topicId}`);
+}
