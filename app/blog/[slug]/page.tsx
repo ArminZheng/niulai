@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { withReadRetry } from "@/lib/retry";
 import { CommentForm } from "@/components/blog/CommentForm";
 
 export const metadata = { title: "blog — niulai" };
@@ -11,13 +12,15 @@ export default async function PostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = await prisma.post.findUnique({
-    where: { slug },
-    include: {
-      author: true,
-      comments: { include: { author: true }, orderBy: { createdAt: "asc" } },
-    },
-  });
+  const post = await withReadRetry(() =>
+    prisma.post.findUnique({
+      where: { slug },
+      include: {
+        author: true,
+        comments: { include: { author: true }, orderBy: { createdAt: "asc" } },
+      },
+    }),
+  );
 
   if (!post || post.status !== "PUBLISHED") {
     notFound();

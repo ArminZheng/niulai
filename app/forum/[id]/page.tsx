@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { withReadRetry } from "@/lib/retry";
 import { ReplyForm } from "@/components/forum/ReplyForm";
 
 export const metadata = { title: "forum — niulai" };
@@ -11,13 +12,15 @@ export default async function TopicPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const topic = await prisma.topic.findUnique({
-    where: { id },
-    include: {
-      author: true,
-      replies: { include: { author: true }, orderBy: { createdAt: "asc" } },
-    },
-  });
+  const topic = await withReadRetry(() =>
+    prisma.topic.findUnique({
+      where: { id },
+      include: {
+        author: true,
+        replies: { include: { author: true }, orderBy: { createdAt: "asc" } },
+      },
+    }),
+  );
 
   if (!topic) {
     notFound();

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { withReadRetry } from "@/lib/retry";
 
 // Content lives in the DB and changes on write — render per request, never at build.
 export const dynamic = "force-dynamic";
@@ -7,11 +8,13 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "blog — niulai" };
 
 export default async function BlogListPage() {
-  const posts = await prisma.post.findMany({
-    where: { status: "PUBLISHED" },
-    orderBy: { publishedAt: "desc" },
-    include: { author: true },
-  });
+  const posts = await withReadRetry(() =>
+    prisma.post.findMany({
+      where: { status: "PUBLISHED" },
+      orderBy: { publishedAt: "desc" },
+      include: { author: true },
+    }),
+  );
 
   return (
     <article>
