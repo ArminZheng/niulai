@@ -26,7 +26,8 @@ export default async function EditPostPage({
       <hr />
       <DeletePostButton id={post.id} title={post.title} />
       <p>
-        <Link href={`/blog/${post.slug}`}>← back to post</Link>
+        {/* Drafts/archived have no public post page — always return to the list. */}
+        <Link href="/blog">← back to blog</Link>
       </p>
     </article>
   );

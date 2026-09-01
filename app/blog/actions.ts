@@ -96,7 +96,8 @@ export async function createPost(_prev: FormState, formData: FormData): Promise<
   }
 
   revalidatePath("/blog");
-  redirect(`/blog/${slug.value}`);
+  // Drafts have no public detail page — land back on the edit page instead.
+  redirect(status === "PUBLISHED" ? `/blog/${slug.value}` : `/blog/${slug.value}/edit`);
 }
 
 // Update a post. The id comes from a hidden field, so the row is re-fetched
@@ -146,7 +147,8 @@ export async function updatePost(_prev: FormState, formData: FormData): Promise<
 
   revalidatePath("/blog");
   revalidatePath(`/blog/${post.slug}`);
-  redirect(`/blog/${slug.value}`);
+  // Same rule as createPost: unpublished posts live at their edit URL.
+  redirect(status === "PUBLISHED" ? `/blog/${slug.value}` : `/blog/${slug.value}/edit`);
 }
 
 // Hard delete. Comments go with it via the schema's onDelete: Cascade; the
