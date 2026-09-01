@@ -1,7 +1,20 @@
 @import "tailwindcss";
 
+/* Explicit palette per theme; the toggle sets <html data-theme="dark"> (see
+ * lib/theme.ts). color-scheme follows so native controls (scrollbars, form
+ * widgets, hr) render in the right scheme too. */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+  --bg: #fff;
+  --fg: #111;
+  --border: #999;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #141414;
+  --fg: #e8e8e8;
+  --border: #666;
 }
 
 html {
@@ -15,6 +28,8 @@ body {
   max-width: 70ch;
   margin-inline: auto;
   padding: 1.5rem;
+  background: var(--bg);
+  color: var(--fg);
 }
 
 a {
@@ -30,12 +45,12 @@ pre {
 }
 
 /* Preflight strips form-control borders; give text fields a visible one.
- * #999 reads on both light and dark via color-scheme. Boxy radius, small
- * padding so text does not sit on the border. Checkboxes/radios stay native. */
+ * Boxy radius, small padding so text does not sit on the border.
+ * Checkboxes/radios stay native. */
 input,
 textarea,
 select {
-  border: 1px solid #999;
+  border: 1px solid var(--border);
   border-radius: 0;
   padding: 0.25rem 0.4rem;
 }
@@ -50,7 +65,7 @@ input[type="radio"] {
  * the same as a heading. Give it the same border as inputs plus a faint fill so
  * it looks like a control (not a label), and dim it while pending. */
 button {
-  border: 1px solid #999;
+  border: 1px solid var(--border);
   border-radius: 0;
   padding: 0.25rem 0.6rem;
   background: rgba(127, 127, 127, 0.12);
@@ -64,7 +79,7 @@ button:disabled {
 }
 
 /* Preflight strips table borders too; a query table (blog/forum lists) needs a
- * visible grid to be scannable. Same #999 border as the form controls. */
+ * visible grid to be scannable. Same border as the form controls. */
 table {
   border-collapse: collapse;
   width: 100%;
@@ -72,7 +87,7 @@ table {
 
 th,
 td {
-  border: 1px solid #999;
+  border: 1px solid var(--border);
   padding: 0.25rem 0.5rem;
   text-align: left;
 }
@@ -80,7 +95,7 @@ td {
 /* Markdown content: code blocks must read as distinct from prose (§29).
  * Border + padding, scrollable horizontally instead of wrapping. */
 pre {
-  border: 1px solid #999;
+  border: 1px solid var(--border);
   padding: 0.5rem 0.75rem;
   overflow-x: auto;
 }

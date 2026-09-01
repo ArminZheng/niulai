@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { getCurrentUser, getView } from "@/lib/auth";
-import { toggleView } from "@/app/actions";
+import { getTheme } from "@/lib/theme";
+import { toggleView, toggleTheme } from "@/app/actions";
 import "./globals.css";
 
 export const metadata = {
@@ -13,8 +14,9 @@ export const metadata = {
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const view = await getView();
   const user = await getCurrentUser();
+  const theme = await getTheme();
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" data-theme={theme === "dark" ? "dark" : undefined}>
       <body>
         <header>
           <nav>
@@ -29,6 +31,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               {user?.name ?? "未初始化"}{" "}
               <form action={toggleView} style={{ display: "inline" }}>
                 <button type="submit">视角:{view === "admin" ? "管理员" : "访客"}</button>
+              </form>{" "}
+              <form action={toggleTheme} style={{ display: "inline" }}>
+                <button type="submit">主题:{theme === "dark" ? "暗" : "亮"}</button>
               </form>
             </span>
           </nav>
