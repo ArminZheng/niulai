@@ -55,6 +55,8 @@ export default async function PostPage({
       </section>
       <p>
         <Link href="/blog">← back to blog</Link>
+        {" · "}
+        <Link href={`/blog/${post.slug}/edit`}>edit</Link>
       </p>
     </article>
   );
