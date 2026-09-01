@@ -11,6 +11,7 @@ import {
   totalPagesFor,
 } from "@/lib/pagination";
 import { PaginationNav } from "@/components/PaginationNav";
+import { getCurrentUser, canWrite } from "@/lib/auth";
 
 // Content lives in the DB and changes on write — render per request, never at build.
 export const dynamic = "force-dynamic";
@@ -23,6 +24,7 @@ export default async function ForumListPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const sp = await searchParams;
+  const user = await getCurrentUser();
   const page = parsePage(first(sp.page));
   const hrefFor = (p: number) => `/forum${pageQuery(p)}`;
 
@@ -46,9 +48,11 @@ export default async function ForumListPage({
   return (
     <article>
       <h1>forum</h1>
-      <p>
-        <Link href="/forum/new">+ new topic</Link>
-      </p>
+      {canWrite(user) ? (
+        <p>
+          <Link href="/forum/new">+ new topic</Link>
+        </p>
+      ) : null}
       {topics.length === 0 ? (
         <p>暂无话题。</p>
       ) : (

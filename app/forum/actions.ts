@@ -3,17 +3,16 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, canWrite } from "@/lib/auth";
+import { getCurrentUser, canManage, canWrite } from "@/lib/auth";
 import { requireText, TITLE_MAX, CONTENT_MAX, type FormState } from "@/lib/validation";
 import { slugify } from "@/lib/slug";
 
-// Create a forum topic. Auth is a placeholder gate (lib/auth.ts) — open until
-// GitHub OAuth2 lands. Validation is server-side only (CLAUDE.md §24): the
-// client `required` attributes are a convenience, not the boundary.
+// Create a forum topic. Any authenticated identity may post (lib/auth.ts);
+// validation is server-side only (CLAUDE.md §24): the client `required`
+// attributes are a convenience, not the boundary.
 export async function createTopic(_prev: FormState, formData: FormData): Promise<FormState> {
-  if (!(await canWrite())) return { message: "需要登录才能发帖。" };
   const user = await getCurrentUser();
-  if (!user) return { message: "未找到默认作者,请确认数据库已初始化。" };
+  if (!canWrite(user)) return { message: "当前身份不可用,请确认数据库已初始化。" };
 
   const title = requireText(formData.get("title"), "标题", TITLE_MAX);
   const content = requireText(formData.get("content"), "正文", CONTENT_MAX);
@@ -45,9 +44,8 @@ export async function createTopic(_prev: FormState, formData: FormData): Promise
 // Reply to a topic. The topicId comes from a hidden field, so it is re-checked
 // against the DB before writing — never trust client-supplied ids.
 export async function createReply(_prev: FormState, formData: FormData): Promise<FormState> {
-  if (!(await canWrite())) return { message: "需要登录才能回复。" };
   const user = await getCurrentUser();
-  if (!user) return { message: "未找到默认作者,请确认数据库已初始化。" };
+  if (!canWrite(user)) return { message: "当前身份不可用,请确认数据库已初始化。" };
 
   const topicId = String(formData.get("topicId") ?? "");
   const topic = await prisma.topic.findUnique({ where: { id: topicId }, select: { id: true } });
@@ -72,11 +70,15 @@ export async function createReply(_prev: FormState, formData: FormData): Promise
 // Hard delete. Replies go with it via the schema's onDelete: Cascade; the
 // client form shows a native confirm before this runs.
 export async function deleteTopic(_prev: FormState, formData: FormData): Promise<FormState> {
-  if (!(await canWrite())) return { message: "需要登录才能删除。" };
+  const user = await getCurrentUser();
 
   const id = String(formData.get("id") ?? "");
-  const topic = await prisma.topic.findUnique({ where: { id }, select: { id: true } });
+  const topic = await prisma.topic.findUnique({
+    where: { id },
+    select: { id: true, authorId: true },
+  });
   if (!topic) return { message: "话题不存在或已被删除。" };
+  if (!canManage(user, topic.authorId)) return { message: "只能删除自己的话题。" };
 
   try {
     await prisma.topic.delete({ where: { id: topic.id } });
@@ -92,14 +94,15 @@ export async function deleteTopic(_prev: FormState, formData: FormData): Promise
 // The replyId comes from a hidden field, so the row is re-fetched before
 // deleting — never trust client-supplied ids.
 export async function deleteReply(_prev: FormState, formData: FormData): Promise<FormState> {
-  if (!(await canWrite())) return { message: "需要登录才能删除。" };
+  const user = await getCurrentUser();
 
   const replyId = String(formData.get("replyId") ?? "");
   const reply = await prisma.reply.findUnique({
     where: { id: replyId },
-    select: { id: true, topicId: true },
+    select: { id: true, topicId: true, authorId: true },
   });
   if (!reply) return { message: "回复不存在或已被删除。" };
+  if (!canManage(user, reply.authorId)) return { message: "只能删除自己的回复。" };
 
   try {
     await prisma.reply.delete({ where: { id: reply.id } });

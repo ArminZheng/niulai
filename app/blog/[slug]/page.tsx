@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { withReadRetry } from "@/lib/retry";
 import { renderMarkdown } from "@/lib/markdown";
+import { getCurrentUser, canManage } from "@/lib/auth";
 import { deleteComment } from "@/app/blog/actions";
 import { CommentForm } from "@/components/blog/CommentForm";
 import { DeleteButton } from "@/components/DeleteButton";
@@ -15,15 +16,18 @@ export default async function PostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = await withReadRetry(() =>
-    prisma.post.findUnique({
-      where: { slug },
-      include: {
-        author: true,
-        comments: { include: { author: true }, orderBy: { createdAt: "asc" } },
-      },
-    }),
-  );
+  const [user, post] = await Promise.all([
+    getCurrentUser(),
+    withReadRetry(() =>
+      prisma.post.findUnique({
+        where: { slug },
+        include: {
+          author: true,
+          comments: { include: { author: true }, orderBy: { createdAt: "asc" } },
+        },
+      }),
+    ),
+  ]);
 
   if (!post || post.status !== "PUBLISHED") {
     notFound();
@@ -49,13 +53,15 @@ export default async function PostPage({
             {post.comments.map((c) => (
               <li key={c.id}>
                 <strong>{c.author.name}</strong>: {c.content}{" "}
-                <DeleteButton
-                  action={deleteComment}
-                  fields={{ commentId: c.id }}
-                  confirmText="删除这条评论?"
-                  label="删除"
-                  inline
-                />
+                {canManage(user, c.authorId) ? (
+                  <DeleteButton
+                    action={deleteComment}
+                    fields={{ commentId: c.id }}
+                    confirmText="删除这条评论?"
+                    label="删除"
+                    inline
+                  />
+                ) : null}
               </li>
             ))}
           </ul>
@@ -64,8 +70,12 @@ export default async function PostPage({
       </section>
       <p>
         <Link href="/blog">← back to blog</Link>
-        {" · "}
-        <Link href={`/blog/${post.slug}/edit`}>edit</Link>
+        {canManage(user, post.authorId) ? (
+          <>
+            {" · "}
+            <Link href={`/blog/${post.slug}/edit`}>edit</Link>
+          </>
+        ) : null}
       </p>
     </article>
   );
