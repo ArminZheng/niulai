@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { withReadRetry } from "@/lib/retry";
 import { ReplyForm } from "@/components/forum/ReplyForm";
+import { DeleteTopicButton } from "@/components/forum/DeleteTopicButton";
+import { DeleteReplyButton } from "@/components/forum/DeleteReplyButton";
 
 export const metadata = { title: "forum — niulai" };
 
@@ -76,7 +78,8 @@ export default async function TopicPage({
           <ul>
             {replies.map((r) => (
               <li key={r.id}>
-                <strong>{r.author.name}</strong>: {r.content}
+                <strong>{r.author.name}</strong>: {r.content}{" "}
+                <DeleteReplyButton id={r.id} />
               </li>
             ))}
           </ul>
@@ -99,6 +102,8 @@ export default async function TopicPage({
         ) : null}
         <ReplyForm topicId={topic.id} />
       </section>
+      <hr />
+      <DeleteTopicButton id={topic.id} title={topic.title} />
       <p>
         <Link href="/forum">← back to forum</Link>
       </p>

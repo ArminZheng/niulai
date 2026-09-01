@@ -171,3 +171,26 @@ export async function deletePost(_prev: FormState, formData: FormData): Promise<
   revalidatePath(`/blog/${post.slug}`);
   redirect("/blog");
 }
+
+// Hard delete a single comment. The commentId comes from a hidden field, so
+// the row is re-fetched (with its post's slug) before deleting.
+export async function deleteComment(_prev: FormState, formData: FormData): Promise<FormState> {
+  if (!(await canWrite())) return { message: "需要登录才能删除。" };
+
+  const commentId = String(formData.get("commentId") ?? "");
+  const comment = await prisma.comment.findUnique({
+    where: { id: commentId },
+    select: { id: true, post: { select: { slug: true } } },
+  });
+  if (!comment) return { message: "评论不存在或已被删除。" };
+
+  try {
+    await prisma.comment.delete({ where: { id: comment.id } });
+  } catch (err) {
+    console.error("deleteComment failed:", err);
+    return { message: "删除失败,请稍后重试。" };
+  }
+
+  revalidatePath(`/blog/${comment.post.slug}`);
+  redirect(`/blog/${comment.post.slug}`);
+}
