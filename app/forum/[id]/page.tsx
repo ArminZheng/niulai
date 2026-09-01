@@ -11,6 +11,7 @@ import {
   totalPagesFor,
 } from "@/lib/pagination";
 import { deleteReply, deleteTopic } from "@/app/forum/actions";
+import { getCurrentUser, canManage } from "@/lib/auth";
 import { PaginationNav } from "@/components/PaginationNav";
 import { DeleteButton } from "@/components/DeleteButton";
 import { ReplyForm } from "@/components/forum/ReplyForm";
@@ -29,9 +30,10 @@ export default async function TopicPage({
   const page = parsePage(first(sp.page));
   const hrefFor = (p: number) => `/forum/${id}${pageQuery(p)}`;
 
-  const topic = await withReadRetry(() =>
-    prisma.topic.findUnique({ where: { id }, include: { author: true } }),
-  );
+  const [user, topic] = await Promise.all([
+    getCurrentUser(),
+    withReadRetry(() => prisma.topic.findUnique({ where: { id }, include: { author: true } })),
+  ]);
 
   if (!topic) {
     notFound();
@@ -75,13 +77,15 @@ export default async function TopicPage({
             {replies.map((r) => (
               <li key={r.id}>
                 <strong>{r.author.name}</strong>: {r.content}{" "}
-                <DeleteButton
-                  action={deleteReply}
-                  fields={{ replyId: r.id }}
-                  confirmText="删除这条回复?"
-                  label="删除"
-                  inline
-                />
+                {canManage(user, r.authorId) ? (
+                  <DeleteButton
+                    action={deleteReply}
+                    fields={{ replyId: r.id }}
+                    confirmText="删除这条回复?"
+                    label="删除"
+                    inline
+                  />
+                ) : null}
               </li>
             ))}
           </ul>
@@ -91,13 +95,17 @@ export default async function TopicPage({
         ) : null}
         <ReplyForm topicId={topic.id} />
       </section>
-      <hr />
-      <DeleteButton
-        action={deleteTopic}
-        fields={{ id: topic.id }}
-        confirmText={`删除「${topic.title}」?回复将一并删除,不可恢复。`}
-        label="删除话题"
-      />
+      {canManage(user, topic.authorId) ? (
+        <>
+          <hr />
+          <DeleteButton
+            action={deleteTopic}
+            fields={{ id: topic.id }}
+            confirmText={`删除「${topic.title}」?回复将一并删除,不可恢复。`}
+            label="删除话题"
+          />
+        </>
+      ) : null}
       <p>
         <Link href="/forum">← back to forum</Link>
       </p>

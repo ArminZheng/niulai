@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { withReadRetry } from "@/lib/retry";
+import { getCurrentUser, canManage } from "@/lib/auth";
 import { PostForm } from "@/components/blog/PostForm";
 import { deletePost } from "@/app/blog/actions";
 import { DeleteButton } from "@/components/DeleteButton";
@@ -9,14 +10,19 @@ import { DeleteButton } from "@/components/DeleteButton";
 export const metadata = { title: "edit post — niulai" };
 
 // Drafts are editable too, so unlike the public post page this loads any status.
+// Only the author (or an admin) may see the edit surface at all — the
+// updatePost/deletePost actions re-check this server-side.
 export default async function EditPostPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = await withReadRetry(() => prisma.post.findUnique({ where: { slug } }));
-  if (!post) {
+  const [user, post] = await Promise.all([
+    getCurrentUser(),
+    withReadRetry(() => prisma.post.findUnique({ where: { slug } })),
+  ]);
+  if (!post || !canManage(user, post.authorId)) {
     notFound();
   }
 
