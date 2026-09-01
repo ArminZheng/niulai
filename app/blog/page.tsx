@@ -114,7 +114,18 @@ export default async function BlogListPage({
             {posts.map((post) => (
               <tr key={post.id}>
                 <td>
-                  <Link href={`/blog/${post.slug}`}>{post.title}</Link>
+                  {/* Only PUBLISHED posts have a public detail page (drafts and
+                   * archived 404 there by design); management rows penetrate to
+                   * the edit page instead. */}
+                  <Link
+                    href={
+                      post.status === "PUBLISHED"
+                        ? `/blog/${post.slug}`
+                        : `/blog/${post.slug}/edit`
+                    }
+                  >
+                    {post.title}
+                  </Link>
                 </td>
                 <td>{STATUS_LABELS[post.status]}</td>
                 <td>{post.publishedAt?.toLocaleDateString("zh-CN") ?? "—"}</td>
