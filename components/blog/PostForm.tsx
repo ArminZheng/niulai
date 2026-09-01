@@ -3,13 +3,18 @@
 import { useActionState, useState } from "react";
 import { createPost, updatePost } from "@/app/blog/actions";
 import { slugify } from "@/lib/slug";
-import { TITLE_MAX, EXCERPT_MAX, type FormState } from "@/lib/validation";
+import { TITLE_MAX, EXCERPT_MAX, STATUS_LABEL } from "@/lib/validation";
 
-const STATUS_OPTIONS = [
-  { value: "DRAFT", label: "草稿" },
-  { value: "PUBLISHED", label: "已发布" },
-  { value: "ARCHIVED", label: "已归档" },
-] as const;
+const STATUS_OPTIONS = Object.entries(STATUS_LABEL);
+
+// First validation message for a field, if any.
+function FieldError({ messages }: { messages?: string[] }) {
+  return messages?.[0] ? (
+    <p>
+      <small>{messages[0]}</small>
+    </p>
+  ) : null;
+}
 
 type PostValues = {
   id: string;
@@ -48,11 +53,7 @@ export function PostForm({ post }: { post?: PostValues }) {
           }}
         />
       </p>
-      {state.errors?.title?.[0] ? (
-        <p>
-          <small>{state.errors.title[0]}</small>
-        </p>
-      ) : null}
+      <FieldError messages={state.errors?.title} />
       <p>
         <label htmlFor="post-slug">slug(URL 路径,中文标题请手动输入)</label>
         <br />
@@ -70,11 +71,7 @@ export function PostForm({ post }: { post?: PostValues }) {
           }}
         />
       </p>
-      {state.errors?.slug?.[0] ? (
-        <p>
-          <small>{state.errors.slug[0]}</small>
-        </p>
-      ) : null}
+      <FieldError messages={state.errors?.slug} />
       <p>
         <label htmlFor="post-excerpt">摘要(可选)</label>
         <br />
@@ -88,27 +85,19 @@ export function PostForm({ post }: { post?: PostValues }) {
           style={{ width: "100%" }}
         />
       </p>
-      {state.errors?.excerpt?.[0] ? (
-        <p>
-          <small>{state.errors.excerpt[0]}</small>
-        </p>
-      ) : null}
+      <FieldError messages={state.errors?.excerpt} />
       <p>
         <label htmlFor="post-status">状态</label>
         <br />
         <select id="post-status" name="status" defaultValue={post?.status ?? "DRAFT"} disabled={pending}>
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
+          {STATUS_OPTIONS.map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
             </option>
           ))}
         </select>
       </p>
-      {state.errors?.status?.[0] ? (
-        <p>
-          <small>{state.errors.status[0]}</small>
-        </p>
-      ) : null}
+      <FieldError messages={state.errors?.status} />
       <p>
         <label htmlFor="post-content">正文(Markdown)</label>
         <br />
@@ -122,11 +111,7 @@ export function PostForm({ post }: { post?: PostValues }) {
           style={{ width: "100%" }}
         />
       </p>
-      {state.errors?.content?.[0] ? (
-        <p>
-          <small>{state.errors.content[0]}</small>
-        </p>
-      ) : null}
+      <FieldError messages={state.errors?.content} />
       {state.message ? (
         <p>
           <small>{state.message}</small>

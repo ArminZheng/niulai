@@ -2,25 +2,20 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { withReadRetry } from "@/lib/retry";
+import {
+  PAGE_SIZE,
+  first,
+  pageQuery,
+  parsePage,
+  skipFor,
+  totalPagesFor,
+} from "@/lib/pagination";
+import { deleteReply, deleteTopic } from "@/app/forum/actions";
+import { PaginationNav } from "@/components/PaginationNav";
+import { DeleteButton } from "@/components/DeleteButton";
 import { ReplyForm } from "@/components/forum/ReplyForm";
-import { DeleteTopicButton } from "@/components/forum/DeleteTopicButton";
-import { DeleteReplyButton } from "@/components/forum/DeleteReplyButton";
 
 export const metadata = { title: "forum — niulai" };
-
-const PAGE_SIZE = 20;
-
-// searchParams values may repeat (?page=1&page=2); the first one wins.
-function first(value: string | string[] | undefined): string {
-  return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
-}
-
-// Canonical links: omit params at their defaults so URLs stay short.
-function pageQuery(page: number): string {
-  const params = new URLSearchParams();
-  if (page > 1) params.set("page", String(page));
-  return params.toString();
-}
 
 export default async function TopicPage({
   params,
@@ -31,7 +26,8 @@ export default async function TopicPage({
 }) {
   const { id } = await params;
   const sp = await searchParams;
-  const page = Math.max(1, parseInt(first(sp.page), 10) || 1);
+  const page = parsePage(first(sp.page));
+  const hrefFor = (p: number) => `/forum/${id}${pageQuery(p)}`;
 
   const topic = await withReadRetry(() =>
     prisma.topic.findUnique({ where: { id }, include: { author: true } }),
@@ -44,16 +40,16 @@ export default async function TopicPage({
   // Count first so an out-of-range page can be clamped instead of rendering
   // an empty list with no explanation.
   const total = await withReadRetry(() => prisma.reply.count({ where: { topicId: id } }));
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = totalPagesFor(total);
   if (page > totalPages) {
-    redirect(`/forum/${id}?${pageQuery(totalPages)}`);
+    redirect(hrefFor(totalPages));
   }
 
   const replies = await withReadRetry(() =>
     prisma.reply.findMany({
       where: { topicId: id },
       orderBy: { createdAt: "asc" },
-      skip: (page - 1) * PAGE_SIZE,
+      skip: skipFor(page),
       take: PAGE_SIZE,
       include: { author: true },
     }),
@@ -79,31 +75,29 @@ export default async function TopicPage({
             {replies.map((r) => (
               <li key={r.id}>
                 <strong>{r.author.name}</strong>: {r.content}{" "}
-                <DeleteReplyButton id={r.id} />
+                <DeleteButton
+                  action={deleteReply}
+                  fields={{ replyId: r.id }}
+                  confirmText="删除这条回复?"
+                  label="删除"
+                  inline
+                />
               </li>
             ))}
           </ul>
         )}
         {totalPages > 1 ? (
-          <nav aria-label="分页">
-            {page > 1 ? (
-              <>
-                <Link href={`/forum/${id}?${pageQuery(page - 1)}`}>← 上一页</Link>{" "}
-              </>
-            ) : null}
-            第 {page} / {totalPages} 页 · 共 {total} 条
-            {page < totalPages ? (
-              <>
-                {" "}
-                <Link href={`/forum/${id}?${pageQuery(page + 1)}`}>下一页 →</Link>
-              </>
-            ) : null}
-          </nav>
+          <PaginationNav page={page} totalPages={totalPages} total={total} hrefFor={hrefFor} />
         ) : null}
         <ReplyForm topicId={topic.id} />
       </section>
       <hr />
-      <DeleteTopicButton id={topic.id} title={topic.title} />
+      <DeleteButton
+        action={deleteTopic}
+        fields={{ id: topic.id }}
+        confirmText={`删除「${topic.title}」?回复将一并删除,不可恢复。`}
+        label="删除话题"
+      />
       <p>
         <Link href="/forum">← back to forum</Link>
       </p>

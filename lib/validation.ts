@@ -63,3 +63,11 @@ export function requireSlug(value: FormDataEntryValue | null): FieldResult {
   if (v === "new") return { value: "", errors: ["slug 不能使用保留字 new"] };
   return { value: v };
 }
+
+// Chinese labels for post statuses — single source for the list filter,
+// the table cell, and the edit form's status select.
+export const STATUS_LABEL: Record<"DRAFT" | "PUBLISHED" | "ARCHIVED", string> = {
+  DRAFT: "草稿",
+  PUBLISHED: "已发布",
+  ARCHIVED: "已归档",
+};

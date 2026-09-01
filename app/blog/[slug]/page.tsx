@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { withReadRetry } from "@/lib/retry";
 import { renderMarkdown } from "@/lib/markdown";
+import { deleteComment } from "@/app/blog/actions";
 import { CommentForm } from "@/components/blog/CommentForm";
-import { DeleteCommentButton } from "@/components/blog/DeleteCommentButton";
+import { DeleteButton } from "@/components/DeleteButton";
 
 export const metadata = { title: "blog — niulai" };
 
@@ -48,7 +49,13 @@ export default async function PostPage({
             {post.comments.map((c) => (
               <li key={c.id}>
                 <strong>{c.author.name}</strong>: {c.content}{" "}
-                <DeleteCommentButton id={c.id} />
+                <DeleteButton
+                  action={deleteComment}
+                  fields={{ commentId: c.id }}
+                  confirmText="删除这条评论?"
+                  label="删除"
+                  inline
+                />
               </li>
             ))}
           </ul>
