@@ -45,3 +45,20 @@ input[type="radio"] {
   border: 0;
   padding: 0;
 }
+
+/* Preflight also flattens buttons to transparent text, so a submit button reads
+ * the same as a heading. Give it the same border as inputs plus a faint fill so
+ * it looks like a control (not a label), and dim it while pending. */
+button {
+  border: 1px solid #999;
+  border-radius: 0;
+  padding: 0.25rem 0.6rem;
+  background: rgba(127, 127, 127, 0.12);
+  color: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
