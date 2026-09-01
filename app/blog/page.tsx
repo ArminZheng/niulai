@@ -82,6 +82,9 @@ export default async function BlogListPage({
   return (
     <article>
       <h1>blog</h1>
+      <p>
+        <Link href="/blog/new">+ new post</Link>
+      </p>
       {/* GET form: a new query resets to page 1 by simply not carrying page. */}
       <form method="get" action="/blog">
         <input type="search" name="q" defaultValue={q} placeholder="搜索标题" />
@@ -104,6 +107,7 @@ export default async function BlogListPage({
               <th>状态</th>
               <th>发布时间</th>
               <th>评论</th>
+              <th>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -115,6 +119,9 @@ export default async function BlogListPage({
                 <td>{STATUS_LABELS[post.status]}</td>
                 <td>{post.publishedAt?.toLocaleDateString("zh-CN") ?? "—"}</td>
                 <td>{post._count.comments}</td>
+                <td>
+                  <Link href={`/blog/${post.slug}/edit`}>edit</Link>
+                </td>
               </tr>
             ))}
           </tbody>
