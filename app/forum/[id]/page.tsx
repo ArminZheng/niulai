@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { ReplyForm } from "@/components/forum/ReplyForm";
 
 export const metadata = { title: "forum — niulai" };
 
@@ -46,9 +47,7 @@ export default async function TopicPage({
             ))}
           </ul>
         )}
-        <p>
-          <small>回复需登录(待接入认证)。</small>
-        </p>
+        <ReplyForm topicId={topic.id} />
       </section>
       <p>
         <Link href="/forum">← back to forum</Link>

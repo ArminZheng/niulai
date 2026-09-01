@@ -1,10 +1,13 @@
+import Link from "next/link";
+import { TopicForm } from "@/components/forum/TopicForm";
+
 export default function NewTopicPage() {
   return (
     <article>
       <h1>new topic</h1>
-      <p>发起话题需登录。待接入认证后实现表单与 Server Action。</p>
+      <TopicForm />
       <p>
-        <a href="/forum">← back to forum</a>
+        <Link href="/forum">← back to forum</Link>
       </p>
     </article>
   );

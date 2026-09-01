@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { CommentForm } from "@/components/blog/CommentForm";
 
 export const metadata = { title: "blog — niulai" };
 
@@ -47,9 +48,7 @@ export default async function PostPage({
             ))}
           </ul>
         )}
-        <p>
-          <small>评论需登录(待接入认证)。</small>
-        </p>
+        <CommentForm slug={post.slug} />
       </section>
       <p>
         <Link href="/blog">← back to blog</Link>
