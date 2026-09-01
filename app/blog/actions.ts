@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import type { PostStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, canWrite } from "@/lib/auth";
+import { getCurrentUser, canAuthorPosts, canManage, canWrite } from "@/lib/auth";
 import {
   requireText,
   optionalText,
@@ -32,9 +32,8 @@ function parseStatus(value: FormDataEntryValue | null): PostStatus | null {
 // Comment on a blog post. The slug comes from a hidden field and is re-checked
 // against the DB (published posts only) before writing — never trust the client.
 export async function createComment(_prev: FormState, formData: FormData): Promise<FormState> {
-  if (!(await canWrite())) return { message: "需要登录才能评论。" };
   const user = await getCurrentUser();
-  if (!user) return { message: "未找到默认作者,请确认数据库已初始化。" };
+  if (!canWrite(user)) return { message: "当前身份不可用,请确认数据库已初始化。" };
 
   const slug = String(formData.get("slug") ?? "");
   const post = await prisma.post.findUnique({ where: { slug }, select: { id: true, status: true } });
@@ -59,9 +58,8 @@ export async function createComment(_prev: FormState, formData: FormData): Promi
 // Create a blog post. Slug uniqueness is enforced by the DB constraint, not a
 // check-then-insert round-trip (which races anyway); P2002 becomes a field error.
 export async function createPost(_prev: FormState, formData: FormData): Promise<FormState> {
-  if (!(await canWrite())) return { message: "需要登录才能发文。" };
   const user = await getCurrentUser();
-  if (!user) return { message: "未找到默认作者,请确认数据库已初始化。" };
+  if (!canAuthorPosts(user)) return { message: "只有作者或管理员可以发文。" };
 
   const status = parseStatus(formData.get("status"));
   if (!status) return { errors: { status: ["状态无效"] } };
@@ -104,14 +102,15 @@ export async function createPost(_prev: FormState, formData: FormData): Promise<
 // before writing — never trust client-supplied ids. First publish stamps
 // publishedAt; unpublishing keeps it so a later republish doesn't rewrite history.
 export async function updatePost(_prev: FormState, formData: FormData): Promise<FormState> {
-  if (!(await canWrite())) return { message: "需要登录才能编辑。" };
+  const user = await getCurrentUser();
 
   const id = String(formData.get("id") ?? "");
   const post = await prisma.post.findUnique({
     where: { id },
-    select: { id: true, slug: true, publishedAt: true },
+    select: { id: true, slug: true, publishedAt: true, authorId: true },
   });
   if (!post) return { message: "文章不存在或已被删除。" };
+  if (!canManage(user, post.authorId)) return { message: "只能编辑自己的文章。" };
 
   const status = parseStatus(formData.get("status"));
   if (!status) return { errors: { status: ["状态无效"] } };
@@ -154,11 +153,15 @@ export async function updatePost(_prev: FormState, formData: FormData): Promise<
 // Hard delete. Comments go with it via the schema's onDelete: Cascade; the
 // client form shows a native confirm before this runs.
 export async function deletePost(_prev: FormState, formData: FormData): Promise<FormState> {
-  if (!(await canWrite())) return { message: "需要登录才能删除。" };
+  const user = await getCurrentUser();
 
   const id = String(formData.get("id") ?? "");
-  const post = await prisma.post.findUnique({ where: { id }, select: { id: true, slug: true } });
+  const post = await prisma.post.findUnique({
+    where: { id },
+    select: { id: true, slug: true, authorId: true },
+  });
   if (!post) return { message: "文章不存在或已被删除。" };
+  if (!canManage(user, post.authorId)) return { message: "只能删除自己的文章。" };
 
   try {
     await prisma.post.delete({ where: { id: post.id } });
@@ -175,14 +178,15 @@ export async function deletePost(_prev: FormState, formData: FormData): Promise<
 // Hard delete a single comment. The commentId comes from a hidden field, so
 // the row is re-fetched (with its post's slug) before deleting.
 export async function deleteComment(_prev: FormState, formData: FormData): Promise<FormState> {
-  if (!(await canWrite())) return { message: "需要登录才能删除。" };
+  const user = await getCurrentUser();
 
   const commentId = String(formData.get("commentId") ?? "");
   const comment = await prisma.comment.findUnique({
     where: { id: commentId },
-    select: { id: true, post: { select: { slug: true } } },
+    select: { id: true, authorId: true, post: { select: { slug: true } } },
   });
   if (!comment) return { message: "评论不存在或已被删除。" };
+  if (!canManage(user, comment.authorId)) return { message: "只能删除自己的评论。" };
 
   try {
     await prisma.comment.delete({ where: { id: comment.id } });

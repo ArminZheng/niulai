@@ -102,6 +102,12 @@ INSERT INTO "User" ("id","email","name","role","createdAt","updatedAt")
 VALUES ('user-owner','owner@niulai.local','Site Owner','ADMIN', now(), now())
 ON CONFLICT (id) DO NOTHING;
 
+-- The "other user" behind the visitor view (lib/auth.ts). READER: can
+-- comment/reply as someone else, owns nothing, cannot author posts.
+INSERT INTO "User" ("id","email","name","role","createdAt","updatedAt")
+VALUES ('user-guest','guest@niulai.local','Visitor','READER', now(), now())
+ON CONFLICT (id) DO NOTHING;
+
 INSERT INTO "Post" ("id","title","slug","content","excerpt","status","authorId","publishedAt","createdAt","updatedAt") VALUES
   ('post-hello-world','Hello, world','hello-world',
    '# Hello\n\nThis is the first post. Content over decoration.',

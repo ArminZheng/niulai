@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { withReadRetry } from "@/lib/retry";
+import { getCurrentUser, canAuthorPosts, canManage } from "@/lib/auth";
 import {
   PAGE_SIZE,
   first,
@@ -31,11 +32,17 @@ export default async function BlogListPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const sp = await searchParams;
+  const user = await getCurrentUser();
+  // Non-authors (visitor view, anonymous once OAuth lands) only ever see the
+  // public reading view — drafts/archives stay owner-only even if the status
+  // param is hand-crafted in the URL.
+  const authoring = canAuthorPosts(user);
   const q = first(sp.q).trim();
   const statusParam = first(sp.status).toUpperCase();
-  const status: StatusFilter = (STATUS_FILTERS as readonly string[]).includes(statusParam)
-    ? (statusParam as StatusFilter)
-    : "PUBLISHED";
+  const status: StatusFilter =
+    authoring && (STATUS_FILTERS as readonly string[]).includes(statusParam)
+      ? (statusParam as StatusFilter)
+      : "PUBLISHED";
   const page = parsePage(first(sp.page));
 
   // Canonical links keep the active filters; pageQuery drops defaults.
@@ -73,20 +80,24 @@ export default async function BlogListPage({
   return (
     <article>
       <h1>blog</h1>
-      <p>
-        <Link href="/blog/new">+ new post</Link>
-      </p>
+      {authoring ? (
+        <p>
+          <Link href="/blog/new">+ new post</Link>
+        </p>
+      ) : null}
       {/* GET form: a new query resets to page 1 by simply not carrying page. */}
       <form method="get" action="/blog">
         <input type="search" name="q" defaultValue={q} placeholder="搜索标题" />
-        <select name="status" defaultValue={status} aria-label="状态">
-          {STATUS_FILTERS.map((s) => (
-            <option key={s} value={s}>
-              {/* ALL is a filter-only pseudo status, not a real post status. */}
-              {s === "ALL" ? "全部" : STATUS_LABEL[s]}
-            </option>
-          ))}
-        </select>
+        {authoring ? (
+          <select name="status" defaultValue={status} aria-label="状态">
+            {STATUS_FILTERS.map((s) => (
+              <option key={s} value={s}>
+                {/* ALL is a filter-only pseudo status, not a real post status. */}
+                {s === "ALL" ? "全部" : STATUS_LABEL[s]}
+              </option>
+            ))}
+          </select>
+        ) : null}
         <button type="submit">查询</button>
       </form>
       {posts.length === 0 ? (
@@ -123,7 +134,9 @@ export default async function BlogListPage({
                 <td>{post.publishedAt?.toLocaleDateString("zh-CN") ?? "—"}</td>
                 <td>{post._count.comments}</td>
                 <td>
-                  <Link href={`/blog/${post.slug}/edit`}>edit</Link>
+                  {canManage(user, post.authorId) ? (
+                    <Link href={`/blog/${post.slug}/edit`}>edit</Link>
+                  ) : null}
                 </td>
               </tr>
             ))}
