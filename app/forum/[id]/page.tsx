@@ -1,30 +1,61 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { withReadRetry } from "@/lib/retry";
 import { ReplyForm } from "@/components/forum/ReplyForm";
 
 export const metadata = { title: "forum — niulai" };
 
+const PAGE_SIZE = 20;
+
+// searchParams values may repeat (?page=1&page=2); the first one wins.
+function first(value: string | string[] | undefined): string {
+  return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
+}
+
+// Canonical links: omit params at their defaults so URLs stay short.
+function pageQuery(page: number): string {
+  const params = new URLSearchParams();
+  if (page > 1) params.set("page", String(page));
+  return params.toString();
+}
+
 export default async function TopicPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { id } = await params;
+  const sp = await searchParams;
+  const page = Math.max(1, parseInt(first(sp.page), 10) || 1);
+
   const topic = await withReadRetry(() =>
-    prisma.topic.findUnique({
-      where: { id },
-      include: {
-        author: true,
-        replies: { include: { author: true }, orderBy: { createdAt: "asc" } },
-      },
-    }),
+    prisma.topic.findUnique({ where: { id }, include: { author: true } }),
   );
 
   if (!topic) {
     notFound();
   }
+
+  // Count first so an out-of-range page can be clamped instead of rendering
+  // an empty list with no explanation.
+  const total = await withReadRetry(() => prisma.reply.count({ where: { topicId: id } }));
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (page > totalPages) {
+    redirect(`/forum/${id}?${pageQuery(totalPages)}`);
+  }
+
+  const replies = await withReadRetry(() =>
+    prisma.reply.findMany({
+      where: { topicId: id },
+      orderBy: { createdAt: "asc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      include: { author: true },
+    }),
+  );
 
   return (
     <article>
@@ -38,18 +69,34 @@ export default async function TopicPage({
         {topic.content}
       </pre>
       <section>
-        <h2>回复 ({topic.replies.length})</h2>
-        {topic.replies.length === 0 ? (
+        <h2>回复 ({total})</h2>
+        {replies.length === 0 ? (
           <p>暂无回复。</p>
         ) : (
           <ul>
-            {topic.replies.map((r) => (
+            {replies.map((r) => (
               <li key={r.id}>
                 <strong>{r.author.name}</strong>: {r.content}
               </li>
             ))}
           </ul>
         )}
+        {totalPages > 1 ? (
+          <nav aria-label="分页">
+            {page > 1 ? (
+              <>
+                <Link href={`/forum/${id}?${pageQuery(page - 1)}`}>← 上一页</Link>{" "}
+              </>
+            ) : null}
+            第 {page} / {totalPages} 页 · 共 {total} 条
+            {page < totalPages ? (
+              <>
+                {" "}
+                <Link href={`/forum/${id}?${pageQuery(page + 1)}`}>下一页 →</Link>
+              </>
+            ) : null}
+          </nav>
+        ) : null}
         <ReplyForm topicId={topic.id} />
       </section>
       <p>
