@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import type { User } from "@prisma/client";
@@ -26,9 +27,11 @@ export async function getView(): Promise<View> {
 
 // The "current" user behind the active view. Null means the seeded row is
 // missing (db not initialized) — actions treat null as unauthenticated.
-export async function getCurrentUser(): Promise<User | null> {
+// React `cache` dedupes per request: the layout and the page both call this,
+// and each call would otherwise be a separate cross-region DB round trip.
+export const getCurrentUser = cache(async (): Promise<User | null> => {
   return prisma.user.findUnique({ where: { id: VIEW_USER_ID[await getView()] } });
-}
+});
 
 // Any authenticated identity may write user content (topics, replies, comments).
 // Type predicate: passing the gate narrows away null for the caller.

@@ -28,22 +28,23 @@ export default async function ForumListPage({
   const page = parsePage(first(sp.page));
   const hrefFor = (p: number) => `/forum${pageQuery(p)}`;
 
-  // Count first so an out-of-range page can be clamped instead of rendering
-  // an empty list with no explanation.
-  const total = await withReadRetry(() => prisma.topic.count());
+  // Count and page fetch run in parallel — each round trip to the DB is
+  // cross-region, so serializing them doubles the wait.
+  const [total, topics] = await Promise.all([
+    withReadRetry(() => prisma.topic.count()),
+    withReadRetry(() =>
+      prisma.topic.findMany({
+        orderBy: { createdAt: "desc" },
+        skip: skipFor(page),
+        take: PAGE_SIZE,
+        include: { author: true, _count: { select: { replies: true } } },
+      }),
+    ),
+  ]);
   const totalPages = totalPagesFor(total);
   if (page > totalPages) {
     redirect(hrefFor(totalPages));
   }
-
-  const topics = await withReadRetry(() =>
-    prisma.topic.findMany({
-      orderBy: { createdAt: "desc" },
-      skip: skipFor(page),
-      take: PAGE_SIZE,
-      include: { author: true, _count: { select: { replies: true } } },
-    }),
-  );
 
   return (
     <article>

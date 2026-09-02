@@ -54,28 +54,30 @@ export default async function BlogListPage({
     ...(q ? { title: { contains: q, mode: "insensitive" as const } } : {}),
   };
 
-  // Count first so an out-of-range page can be clamped instead of rendering
-  // an empty table with no explanation.
-  const total = await withReadRetry(() => prisma.post.count({ where }));
+  // Count and page fetch run in parallel — each round trip to the DB is
+  // cross-region, so serializing them doubles the wait. Count must resolve
+  // first only in that an out-of-range page redirects instead of rendering.
+  const [total, posts] = await Promise.all([
+    withReadRetry(() => prisma.post.count({ where })),
+    withReadRetry(() =>
+      prisma.post.findMany({
+        where,
+        orderBy: [
+          // Drafts have no publishedAt; sink them explicitly rather than rely on
+          // Postgres DESC-NULLS-FIRST, which would float them above real posts.
+          { publishedAt: { sort: "desc", nulls: "last" } },
+          { createdAt: "desc" },
+        ],
+        skip: skipFor(page),
+        take: PAGE_SIZE,
+        include: { _count: { select: { comments: true } } },
+      }),
+    ),
+  ]);
   const totalPages = totalPagesFor(total);
   if (page > totalPages) {
     redirect(hrefFor(totalPages));
   }
-
-  const posts = await withReadRetry(() =>
-    prisma.post.findMany({
-      where,
-      orderBy: [
-        // Drafts have no publishedAt; sink them explicitly rather than rely on
-        // Postgres DESC-NULLS-FIRST, which would float them above real posts.
-        { publishedAt: { sort: "desc", nulls: "last" } },
-        { createdAt: "desc" },
-      ],
-      skip: skipFor(page),
-      take: PAGE_SIZE,
-      include: { _count: { select: { comments: true } } },
-    }),
-  );
 
   return (
     <article>

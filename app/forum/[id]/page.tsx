@@ -39,23 +39,24 @@ export default async function TopicPage({
     notFound();
   }
 
-  // Count first so an out-of-range page can be clamped instead of rendering
-  // an empty list with no explanation.
-  const total = await withReadRetry(() => prisma.reply.count({ where: { topicId: id } }));
+  // Count and page fetch run in parallel — each round trip to the DB is
+  // cross-region, so serializing them doubles the wait.
+  const [total, replies] = await Promise.all([
+    withReadRetry(() => prisma.reply.count({ where: { topicId: id } })),
+    withReadRetry(() =>
+      prisma.reply.findMany({
+        where: { topicId: id },
+        orderBy: { createdAt: "asc" },
+        skip: skipFor(page),
+        take: PAGE_SIZE,
+        include: { author: true },
+      }),
+    ),
+  ]);
   const totalPages = totalPagesFor(total);
   if (page > totalPages) {
     redirect(hrefFor(totalPages));
   }
-
-  const replies = await withReadRetry(() =>
-    prisma.reply.findMany({
-      where: { topicId: id },
-      orderBy: { createdAt: "asc" },
-      skip: skipFor(page),
-      take: PAGE_SIZE,
-      include: { author: true },
-    }),
-  );
 
   return (
     <article>
