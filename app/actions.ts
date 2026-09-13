@@ -15,10 +15,10 @@ export async function toggleView(): Promise<void> {
 }
 
 // Flip light ⇄ dark. Stored in a cookie, applied via <html data-theme> in the
-// root layout — see lib/theme.ts.
+// root layout — see lib/theme.ts. Default (no cookie) is the dark tool style.
 export async function toggleTheme(): Promise<void> {
   const store = await cookies();
-  const next = store.get(THEME_COOKIE)?.value === "dark" ? "light" : "dark";
+  const next = store.get(THEME_COOKIE)?.value === "light" ? "dark" : "light";
   store.set(THEME_COOKIE, next, { path: "/", sameSite: "lax" });
   revalidatePath("/", "layout");
 }

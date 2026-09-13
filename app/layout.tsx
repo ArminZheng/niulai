@@ -16,7 +16,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const user = await getCurrentUser();
   const theme = await getTheme();
   return (
-    <html lang="zh-CN" data-theme={theme === "dark" ? "dark" : undefined}>
+    <html lang="zh-CN" data-theme={theme === "light" ? "light" : undefined}>
       <body>
         <header>
           <nav>
