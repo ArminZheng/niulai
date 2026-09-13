@@ -69,7 +69,9 @@ export default async function PostPage({
         <CommentForm slug={post.slug} />
       </section>
       <p>
-        <Link href="/blog">← back to blog</Link>
+        <Link href="/">← back to home</Link>
+        {" · "}
+        <Link href="/blog">blog</Link>
         {canManage(user, post.authorId) ? (
           <>
             {" · "}

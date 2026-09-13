@@ -81,26 +81,28 @@ export default async function BlogListPage({
 
   return (
     <article>
-      {authoring ? (
-        <p>
-          <Link href="/blog/new">+ new post</Link>
-        </p>
-      ) : null}
-      {/* GET form: a new query resets to page 1 by simply not carrying page. */}
-      <form method="get" action="/blog">
-        <input type="search" name="q" defaultValue={q} placeholder="搜索标题" />
+      <div className="toolbar">
+        {/* GET form: a new query resets to page 1 by simply not carrying page. */}
+        <form method="get" action="/blog">
+          <input type="search" name="q" defaultValue={q} placeholder="搜索标题" />
+          {authoring ? (
+            <select name="status" defaultValue={status} aria-label="状态">
+              {STATUS_FILTERS.map((s) => (
+                <option key={s} value={s}>
+                  {/* ALL is a filter-only pseudo status, not a real post status. */}
+                  {s === "ALL" ? "全部" : STATUS_LABEL[s]}
+                </option>
+              ))}
+            </select>
+          ) : null}
+          <button type="submit">查询</button>
+        </form>
         {authoring ? (
-          <select name="status" defaultValue={status} aria-label="状态">
-            {STATUS_FILTERS.map((s) => (
-              <option key={s} value={s}>
-                {/* ALL is a filter-only pseudo status, not a real post status. */}
-                {s === "ALL" ? "全部" : STATUS_LABEL[s]}
-              </option>
-            ))}
-          </select>
+          <Link href="/blog/new" className="btn">
+            + new post
+          </Link>
         ) : null}
-        <button type="submit">查询</button>
-      </form>
+      </div>
       {posts.length === 0 ? (
         <p>没有匹配的文章。</p>
       ) : (

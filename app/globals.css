@@ -67,7 +67,8 @@ h3 {
 
 /* Preflight strips form-control borders; give text fields a visible one.
  * Boxy radius, small padding so text does not sit on the border.
- * Checkboxes/radios stay native. */
+ * Checkboxes/radios stay native. All inline controls share one height and
+ * vertical-align so a search box, select, and button line up on one row. */
 input,
 textarea,
 select {
@@ -76,6 +77,14 @@ select {
   padding: 0.25rem 0.4rem;
   background: var(--bg-panel);
   color: var(--fg);
+}
+
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+button {
+  height: 1.9rem;
+  box-sizing: border-box;
+  vertical-align: middle;
 }
 
 input[type="checkbox"],
@@ -290,4 +299,40 @@ pre {
   color: var(--muted);
   font-size: 0.85rem;
   font-weight: normal;
+}
+
+/* ===== List toolbar: search row with the primary action pinned right ===== */
+.toolbar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0.5rem 0 1rem;
+}
+.toolbar form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex: 1;
+  margin: 0;
+}
+.toolbar .spacer {
+  flex: 1;
+}
+/* A link styled as the primary action button (e.g. "+ new post"). */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  height: 1.9rem;
+  box-sizing: border-box;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  color: var(--fg);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Destructive actions sit away from neighbouring text/links to cut misclicks. */
+.delete-form {
+  margin-left: 0.75rem;
 }

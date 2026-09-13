@@ -20,7 +20,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <body>
         <header>
           <nav>
-            <a href="/">home</a>
+            <a href="/">niulai</a>
             {" · "}
             <a href="/blog">blog</a>
             {" · "}

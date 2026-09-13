@@ -24,6 +24,7 @@ export function DeleteButton({
   return (
     <form
       action={formAction}
+      className="delete-form"
       style={inline ? { display: "inline" } : undefined}
       onSubmit={(e) => {
         if (!confirm(confirmText)) {

@@ -49,9 +49,12 @@ export default async function ForumListPage({
   return (
     <article>
       {canWrite(user) ? (
-        <p>
-          <Link href="/forum/new">+ new topic</Link>
-        </p>
+        <div className="toolbar">
+          <span className="spacer" />
+          <Link href="/forum/new" className="btn">
+            + new topic
+          </Link>
+        </div>
       ) : null}
       {topics.length === 0 ? (
         <p>暂无话题。</p>
