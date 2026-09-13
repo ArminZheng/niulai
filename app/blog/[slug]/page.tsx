@@ -7,15 +7,18 @@ import { getCurrentUser, canManage } from "@/lib/auth";
 import { deleteComment } from "@/app/blog/actions";
 import { CommentForm } from "@/components/blog/CommentForm";
 import { DeleteButton } from "@/components/DeleteButton";
+import { BackLink } from "@/components/BackLink";
 
 export const metadata = { title: "blog — niulai" };
 
 export default async function PostPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
-  const { slug } = await params;
+  const [{ slug }, { from }] = await Promise.all([params, searchParams]);
   const [user, post] = await Promise.all([
     getCurrentUser(),
     withReadRetry(() =>
@@ -69,9 +72,7 @@ export default async function PostPage({
         <CommentForm slug={post.slug} />
       </section>
       <p>
-        <Link href="/">← back to home</Link>
-        {" · "}
-        <Link href="/blog">blog</Link>
+        <BackLink from={from} fallback="blog" />
         {canManage(user, post.authorId) ? (
           <>
             {" · "}

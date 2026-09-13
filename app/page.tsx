@@ -17,7 +17,7 @@ export default async function HomePage() {
           {feed.map((item) => (
             <li key={`${item.kind}-${item.id}`} className="feed-item">
               <span className="feed-title">
-                <Link href={item.href}>{item.title}</Link>
+                <Link href={`${item.href}?from=home`}>{item.title}</Link>
               </span>
               <span className="feed-meta">
                 <span className={`tag tag-${item.kind}`}>

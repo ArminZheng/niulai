@@ -15,6 +15,7 @@ import { getCurrentUser, canManage } from "@/lib/auth";
 import { PaginationNav } from "@/components/PaginationNav";
 import { DeleteButton } from "@/components/DeleteButton";
 import { ReplyForm } from "@/components/forum/ReplyForm";
+import { BackLink } from "@/components/BackLink";
 
 export const metadata = { title: "forum — niulai" };
 
@@ -108,7 +109,7 @@ export default async function TopicPage({
         </>
       ) : null}
       <p>
-        <Link href="/forum">← back to forum</Link>
+        <BackLink from={first(sp.from)} fallback="forum" />
       </p>
     </article>
   );

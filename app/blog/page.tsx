@@ -110,10 +110,10 @@ export default async function BlogListPage({
           <thead>
             <tr>
               <th>标题</th>
-              <th>状态</th>
-              <th>发布时间</th>
-              <th>评论</th>
-              <th>操作</th>
+              <th className="col-status">状态</th>
+              <th className="col-date">发布时间</th>
+              <th className="col-comments">评论</th>
+              <th className="col-actions">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -126,7 +126,7 @@ export default async function BlogListPage({
                   <Link
                     href={
                       post.status === "PUBLISHED"
-                        ? `/blog/${post.slug}`
+                        ? `/blog/${post.slug}?from=blog`
                         : `/blog/${post.slug}/edit`
                     }
                   >

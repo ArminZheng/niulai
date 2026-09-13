@@ -9,12 +9,12 @@
 :root {
   color-scheme: dark;
   --bg: #193441;
-  --bg-panel: #3e606f;
+  --bg-panel: #274b5c;
   --fg: #fcfff5;
   --border: #d1dbbd;
   --link: #40e0d0;
   --accent: #7fff00;
-  --muted: #91aa9d;
+  --muted: #a8c4b8;
 }
 
 html[data-theme="light"] {
@@ -36,11 +36,17 @@ html {
 
 body {
   margin: 0;
-  max-width: 90ch;
+  max-width: 76ch;
   margin-inline: auto;
-  padding: 1.5rem;
+  padding: 1.5rem 1.75rem 3rem;
   background: var(--bg);
   color: var(--fg);
+}
+
+/* Breathing room between the nav rule and the first content element on every
+ * page — previously each page's first node sat flush against the header. */
+header {
+  margin-bottom: 1.5rem;
 }
 
 a {
@@ -220,10 +226,14 @@ pre {
   padding: 0;
 }
 .feed-item {
+  /* flex-column shrinks to the longest child, which made each row's divider a
+   * different length; stretch to full width so every rule line matches. */
+  width: 100%;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
-  padding: 0.6rem 0;
+  padding: 0.7rem 0;
   border-bottom: 1px solid var(--border);
 }
 .feed-title a {
@@ -287,9 +297,26 @@ pre {
 }
 
 /* ===== Blog table polish ===== */
+.post-table {
+  table-layout: fixed;
+}
 .post-table th {
   background: var(--bg-panel);
   font-size: 0.85rem;
+}
+/* Title column flexes; the narrow status/date/count/action columns hold a
+ * fixed width so they no longer get crushed together. */
+.post-table .col-status {
+  width: 4.5rem;
+}
+.post-table .col-date {
+  width: 6.5rem;
+}
+.post-table .col-comments {
+  width: 3.5rem;
+}
+.post-table .col-actions {
+  width: 6rem;
 }
 .post-title a {
   font-weight: bold;
@@ -306,7 +333,7 @@ pre {
   display: flex;
   gap: 0.5rem;
   align-items: center;
-  margin: 0.5rem 0 1rem;
+  margin: 0 0 1.25rem;
 }
 .toolbar form {
   display: flex;
@@ -318,13 +345,14 @@ pre {
 .toolbar .spacer {
   flex: 1;
 }
-/* A link styled as the primary action button (e.g. "+ new post"). */
+/* A link styled as the primary action button (e.g. "+ new post"). Shares the
+ * control height/look of real buttons so the toolbar reads as one row. */
 .btn {
   display: inline-flex;
   align-items: center;
   height: 1.9rem;
   box-sizing: border-box;
-  padding: 0.25rem 0.6rem;
+  padding: 0.25rem 0.7rem;
   border: 1px solid var(--border);
   background: var(--bg-panel);
   color: var(--fg);

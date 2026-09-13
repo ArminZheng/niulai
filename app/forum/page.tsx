@@ -66,7 +66,7 @@ export default async function ForumListPage({
               <span className="topic-rank">{skipFor(page) + i + 1}.</span>
               <span className="topic-body">
                 <span className="topic-title">
-                  <Link href={`/forum/${t.id}`}>{t.title}</Link>
+                  <Link href={`/forum/${t.id}?from=forum`}>{t.title}</Link>
                 </span>
                 <span className="topic-meta">
                   {t.author.name} · {t.createdAt.toLocaleDateString("zh-CN")}
