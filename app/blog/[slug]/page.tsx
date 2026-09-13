@@ -43,7 +43,7 @@ export default async function PostPage({
         </small>
       </p>
       {/* Owner-authored Markdown → trusted HTML; see lib/markdown.ts. */}
-      <div dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content) }} />
+      <div className="prose" dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content) }} />
       <section>
         <h2>评论 ({post.comments.length})</h2>
         {post.comments.length === 0 ? (

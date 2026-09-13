@@ -127,3 +127,167 @@ pre {
   padding: 0.5rem 0.75rem;
   overflow-x: auto;
 }
+
+/* ===== Markdown body (.prose) =====
+ * Tailwind preflight flattens every heading/list to body text, so markdown
+ * output needs its own scoped rhythm. Kept inside .prose so UI chrome (nav,
+ * tables, forms) is untouched. */
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  font-weight: bold;
+  line-height: 1.3;
+  margin: 1.4em 0 0.6em;
+}
+.prose h1 {
+  font-size: 1.5em;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.2em;
+}
+.prose h2 {
+  font-size: 1.3em;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.15em;
+}
+.prose h3 {
+  font-size: 1.15em;
+}
+.prose h4 {
+  font-size: 1em;
+}
+.prose h5,
+.prose h6 {
+  font-size: 0.95em;
+  color: var(--muted);
+}
+.prose p,
+.prose ul,
+.prose ol,
+.prose blockquote,
+.prose pre {
+  margin: 0.8em 0;
+}
+.prose ul,
+.prose ol {
+  padding-left: 1.6em;
+}
+.prose ul {
+  list-style: disc;
+}
+.prose ol {
+  list-style: decimal;
+}
+.prose blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 0.8em;
+  color: var(--muted);
+  margin-left: 0;
+}
+.prose code {
+  background: var(--bg-panel);
+  padding: 0.1em 0.3em;
+}
+.prose pre code {
+  background: none;
+  padding: 0;
+}
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 1.5em 0;
+}
+.prose img {
+  max-width: 100%;
+}
+
+/* ===== Home feed (mixed blog + forum stream) ===== */
+.feed,
+.topic-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.feed-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.feed-title a {
+  font-size: 1.05rem;
+  font-weight: bold;
+}
+.feed-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.feed-excerpt {
+  color: var(--muted);
+}
+.tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 0 0.35em;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+}
+.tag-post {
+  color: var(--accent);
+}
+.tag-topic {
+  color: var(--link);
+}
+
+/* ===== Forum topic list (v2ex / Hacker News style) ===== */
+.topic-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.topic-rank {
+  color: var(--muted);
+  min-width: 1.6em;
+  text-align: right;
+}
+.topic-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.topic-title a {
+  font-weight: bold;
+}
+.topic-meta {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.topic-count {
+  background: var(--bg-panel);
+  color: var(--fg);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  padding: 0.05em 0.55em;
+  white-space: nowrap;
+}
+
+/* ===== Blog table polish ===== */
+.post-table th {
+  background: var(--bg-panel);
+  font-size: 0.85rem;
+}
+.post-title a {
+  font-weight: bold;
+}
+.post-excerpt {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: normal;
+}

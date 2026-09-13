@@ -81,7 +81,6 @@ export default async function BlogListPage({
 
   return (
     <article>
-      <h1>blog</h1>
       {authoring ? (
         <p>
           <Link href="/blog/new">+ new post</Link>
@@ -105,7 +104,7 @@ export default async function BlogListPage({
       {posts.length === 0 ? (
         <p>没有匹配的文章。</p>
       ) : (
-        <table>
+        <table className="post-table">
           <thead>
             <tr>
               <th>标题</th>
@@ -118,7 +117,7 @@ export default async function BlogListPage({
           <tbody>
             {posts.map((post) => (
               <tr key={post.id}>
-                <td>
+                <td className="post-title">
                   {/* Only PUBLISHED posts have a public detail page (drafts and
                    * archived 404 there by design); management rows penetrate to
                    * the edit page instead. */}
@@ -131,6 +130,7 @@ export default async function BlogListPage({
                   >
                     {post.title}
                   </Link>
+                  {post.excerpt ? <span className="post-excerpt">{post.excerpt}</span> : null}
                 </td>
                 <td>{STATUS_LABEL[post.status]}</td>
                 <td>{post.publishedAt?.toLocaleDateString("zh-CN") ?? "—"}</td>

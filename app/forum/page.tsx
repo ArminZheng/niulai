@@ -48,7 +48,6 @@ export default async function ForumListPage({
 
   return (
     <article>
-      <h1>forum</h1>
       {canWrite(user) ? (
         <p>
           <Link href="/forum/new">+ new topic</Link>
@@ -57,13 +56,22 @@ export default async function ForumListPage({
       {topics.length === 0 ? (
         <p>暂无话题。</p>
       ) : (
-        <ul>
-          {topics.map((t) => (
-            <li key={t.id}>
-              <Link href={`/forum/${t.id}`}>{t.title}</Link>{" "}
-              <small>
-                ({t._count.replies} 回复) by {t.author.name}
-              </small>
+        <ul className="topic-list">
+          {topics.map((t, i) => (
+            <li key={t.id} className="topic-item">
+              {/* v2ex/HN-style rank by position within the page. */}
+              <span className="topic-rank">{skipFor(page) + i + 1}.</span>
+              <span className="topic-body">
+                <span className="topic-title">
+                  <Link href={`/forum/${t.id}`}>{t.title}</Link>
+                </span>
+                <span className="topic-meta">
+                  {t.author.name} · {t.createdAt.toLocaleDateString("zh-CN")}
+                </span>
+              </span>
+              <span className="topic-count" title={`${t._count.replies} 回复`}>
+                {t._count.replies}
+              </span>
             </li>
           ))}
         </ul>

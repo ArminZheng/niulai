@@ -1,11 +1,36 @@
-export default function HomePage() {
+import Link from "next/link";
+import { getHomeFeed } from "@/lib/feed";
+
+// The feed is random per visit (lib/feed.ts), so render per request.
+export const dynamic = "force-dynamic";
+
+export const metadata = { title: "niulai" };
+
+export default async function HomePage() {
+  const feed = await getHomeFeed(15, "random");
   return (
     <article>
-      <h1>niulai</h1>
-      <p>
-        一个个人博客与小论坛。内容优先,工具风格。导航见上方,
-        或前往 <a href="/blog">blog</a> / <a href="/forum">forum</a>。
-      </p>
+      {feed.length === 0 ? (
+        <p>还没有内容。</p>
+      ) : (
+        <ul className="feed">
+          {feed.map((item) => (
+            <li key={`${item.kind}-${item.id}`} className="feed-item">
+              <span className="feed-title">
+                <Link href={item.href}>{item.title}</Link>
+              </span>
+              <span className="feed-meta">
+                <span className={`tag tag-${item.kind}`}>
+                  {item.kind === "post" ? "博客" : "论坛"}
+                </span>{" "}
+                {item.author} · {item.at.toLocaleDateString("zh-CN")} ·{" "}
+                {item.statCount} {item.statLabel}
+              </span>
+              {item.excerpt ? <span className="feed-excerpt">{item.excerpt}</span> : null}
+            </li>
+          ))}
+        </ul>
+      )}
     </article>
   );
 }
