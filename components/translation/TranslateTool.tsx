@@ -5,7 +5,6 @@ import {
   DEFAULT_CONFIG,
   TRANSLATE_CONFIG_COOKIE,
   renderTemplate,
-  resolveEndpoint,
   type TranslateConfig,
 } from "@/lib/translation";
 
@@ -57,24 +56,30 @@ export function TranslateTool() {
     setBusy(true);
     setOutput("");
     try {
-      const res = await fetch(resolveEndpoint(cfg.baseUrl), {
+      // Proxy through our own origin to dodge the endpoint's missing CORS
+      // headers; the key rides along in the body (see app/api/translate).
+      const res = await fetch("/api/translate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${cfg.apiKey}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          baseUrl: cfg.baseUrl,
+          apiKey: cfg.apiKey,
           model: cfg.model,
           messages: [
             { role: "system", content: renderTemplate(cfg.systemPrompt, { to: target, text }) },
             { role: "user", content: renderTemplate(cfg.userPrompt, { to: target, text }) },
           ],
-          stream: false,
         }),
       });
       if (!res.ok) {
-        const detail = await res.text().catch(() => "");
-        throw new Error(`请求失败 ${res.status}${detail ? `:${detail.slice(0, 200)}` : ""}`);
+        let detail = "";
+        try {
+          const j = (await res.json()) as { error?: string };
+          detail = j.error ?? "";
+        } catch {
+          /* non-JSON error body */
+        }
+        throw new Error(detail || `请求失败 ${res.status}`);
       }
       const data = (await res.json()) as {
         choices?: { message?: { content?: string } }[];
