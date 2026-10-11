@@ -30,8 +30,17 @@ export async function POST(request: Request) {
       body: JSON.stringify({ model, messages, stream: false }),
     });
   } catch (e) {
+    // Node's fetch throws a bare "fetch failed"; the real reason (DNS,
+    // timeout, TLS, reset) lives on the cause chain. Surface it for debugging.
     const msg = e instanceof Error ? e.message : "无法连接翻译服务。";
-    return NextResponse.json({ error: msg }, { status: 502 });
+    const cause =
+      e instanceof Error && e.cause
+        ? e.cause instanceof Error
+          ? `${(e.cause as NodeJS.ErrnoException).code ?? ""} ${e.cause.message}`.trim()
+          : String(e.cause)
+        : "";
+    console.error("translate upstream failed:", cause || msg);
+    return NextResponse.json({ error: cause ? `${msg}(${cause})` : msg }, { status: 502 });
   }
 
   const text = await upstream.text();
