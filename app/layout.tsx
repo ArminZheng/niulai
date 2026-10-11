@@ -28,6 +28,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             {" · "}
             <a href="/translation">translation</a>
             {" · "}
+            <a href="/chat">chat</a>
+            {" · "}
             <a href="/about">about</a>
             <span style={{ float: "right" }}>
               {user?.name ?? "未初始化"}{" "}
