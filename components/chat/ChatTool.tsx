@@ -186,7 +186,10 @@ export function ChatTool() {
             placeholder="输入消息,Enter 发送,Shift+Enter 换行"
             rows={2}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
+              // IME composition: the Enter that confirms a CJK candidate (or
+              // commits Latin text typed inside the IME) must not send. Only a
+              // bare Enter outside composition sends; Shift+Enter newlines.
+              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
                 e.preventDefault();
                 if (!busy) void send();
               }
