@@ -364,3 +364,78 @@ pre {
 .delete-form {
   margin-left: 0.75rem;
 }
+
+/* ===== Translation tool ===== */
+.translate-tool {
+  margin-top: 0.5rem;
+}
+.translate-bar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+.translate-bar .spacer {
+  flex: 1;
+}
+.translate-panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.translate-panes textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+.translate-error {
+  color: #ff7b72;
+  margin: 0.5rem 0;
+}
+.translate-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.translate-settings label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+}
+.translate-settings input,
+.translate-settings textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+.key-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.key-row input[type="text"],
+.key-row input[type="password"] {
+  flex: 1;
+}
+.key-toggle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+.settings-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+@media (max-width: 560px) {
+  .translate-panes {
+    grid-template-columns: 1fr;
+  }
+}
