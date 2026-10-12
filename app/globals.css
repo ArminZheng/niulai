@@ -530,7 +530,6 @@ pre {
   padding: 0.4rem 0.7rem;
   border-radius: 1rem;
   line-height: 1.4;
-  white-space: pre-wrap;
   word-break: break-word;
 }
 /* Own messages on the right in the accent colour, AI on the left on a
@@ -545,6 +544,59 @@ pre {
   color: var(--fg);
   border: 1px solid var(--border);
   border-bottom-left-radius: 0.25rem;
+}
+.bubble-text {
+  white-space: pre-wrap;
+}
+/* Markdown inside AI bubbles: drop the .prose margins so content sits flush in
+ * the bubble, shrink code blocks to fit, and keep colours readable on both
+ * bubble backgrounds. */
+.bubble .prose {
+  white-space: normal;
+}
+.bubble .prose p,
+.bubble .prose ul,
+.bubble .prose ol,
+.bubble .prose blockquote,
+.bubble .prose pre {
+  margin: 0.4em 0;
+}
+.bubble .prose p:first-child,
+.bubble .prose ul:first-child,
+.bubble .prose ol:first-child,
+.bubble .prose blockquote:first-child,
+.bubble .prose pre:first-child {
+  margin-top: 0;
+}
+.bubble .prose p:last-child,
+.bubble .prose ul:last-child,
+.bubble .prose ol:last-child,
+.bubble .prose blockquote:last-child,
+.bubble .prose pre:last-child {
+  margin-bottom: 0;
+}
+.bubble .prose pre {
+  font-size: 0.85em;
+  padding: 0.4rem 0.6rem;
+}
+.bubble .prose code {
+  font-size: 0.9em;
+}
+/* User bubbles have a bright cyan background, so links need darker contrast. */
+.bubble.user .prose a {
+  color: #0d5c56;
+}
+.bubble.user .prose code {
+  background: rgba(25, 52, 65, 0.15);
+  color: #193441;
+}
+.bubble.user .prose pre {
+  background: rgba(25, 52, 65, 0.12);
+  border-color: rgba(25, 52, 65, 0.25);
+}
+.bubble.user .prose blockquote {
+  border-left-color: rgba(25, 52, 65, 0.35);
+  color: rgba(25, 52, 65, 0.75);
 }
 .bubble-time {
   font-size: 0.7rem;

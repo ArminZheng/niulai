@@ -6,6 +6,7 @@ import {
   TRANSLATE_CONFIG_COOKIE,
   type TranslateConfig,
 } from "@/lib/translation";
+import { renderMarkdown } from "@/lib/markdown";
 import {
   appendMessage,
   createSession,
@@ -160,7 +161,14 @@ export function ChatTool() {
             active.messages.map((m, i) => (
               <div key={i} className={`bubble-row ${m.role}`}>
                 <div className={`bubble ${m.role}`}>
-                  <div className="bubble-text">{m.content}</div>
+                  {m.role === "assistant" ? (
+                    <div
+                      className="bubble-text prose"
+                      dangerouslySetInnerHTML={{ __html: renderMarkdown(m.content) }}
+                    />
+                  ) : (
+                    <div className="bubble-text">{m.content}</div>
+                  )}
                   <div className="bubble-time">
                     {new Date(m.at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
                   </div>
